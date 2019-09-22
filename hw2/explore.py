@@ -18,7 +18,8 @@ state_dict_ = {
     0: 'find the wall',
     1: 'turn left',
     2: 'follow the wall',
-    3: 'turn right'
+    3: 'turn right',
+    4: 'reverse',
 }
 
 left_Count = 0
@@ -55,25 +56,54 @@ def take_action():
     state_description = ''
     
     d = 1.5
+    d1 = 0.3
     
-    if regions['front'] > d and regions['fright'] > d and regions['fleft'] > d : #find wall
-        #state_description = 'case 1 - nothing'
+    if regions['front'] > d and regions['fright'] > d and regions['fleft'] > d and regions['right'] > d and regions['left'] > d: #find wall
+        state_description = 'case 1 - nothing'
+        print('1 fw')
         change_state(0)
-    elif regions['front'] > d and regions['right'] > d and regions['left'] > d : #go straight to find wall
-        #state_description = 'case 1 - nothing'
+    if regions['front'] > d and regions['fleft'] > d and regions['fright'] > d and regions['right'] > d: #go straight
+        state_description = 'case 2 - front'
         change_state(2)
-    elif regions['front'] < d :                                             #turn left
-        #state_description = 'case 2 - front'
+    if regions['front'] < d and regions['fleft'] > d and regions['fright'] > d: #turn left
+        state_description = 'case 2 - front'
         change_state(1)
-    elif regions['front'] > d and left_Count < 5 and regions['right'] < d: #go straight 
-        #state_description = 'case 3 - fright'
+    if regions['front'] > d and regions['fleft'] > d and regions['fright'] < d: #go straight
+        state_description = 'case 3 - fright'
         change_state(2)
-    elif regions['front'] > d and regions['right'] > d and left_Count > 5: #take exit after 5 lefts
-        #state_description = 'case 4 - fleft'
+    if regions['front'] > d and regions['fleft'] < d and regions['fright'] > d: #find wall #changed from 0 to 1 turn left
+        print('2nd fw')
+        state_description = 'case 4 - fleft'
+        change_state(2)
+    if regions['front'] < d and regions['fleft'] > d and regions['fright'] < d: #turn left
+        state_description = 'case 5 - front and fright'
+        change_state(1)
+    if regions['front'] < d and regions['fleft'] < d and regions['fright'] > d: #turn left
+        state_description = 'case 6 - front and fleft'
+        change_state(1)
+    if regions['front'] < d and regions['fleft'] < d and regions['fright'] < d: #turn left
+        state_description = 'case 7 - front and fleft and fright'
+        change_state(1)
+    if regions['front'] > d and regions['fleft'] < d and regions['fright'] < d: #find wall
+        state_description = 'case 8 - fleft and fright'
+        change_state(0)
+    if regions['fright'] < d and regions['right'] > 3.0 and left_Count > 30: #turn right
+        state_description = 'case 9 - left and right'
         change_state(3)
-    elif regions['front'] > d and regions['right'] > d and left_Count < 5: #ignore doors if left count is less than 5
-        #state_description = 'case 4 - fleft'
+    if regions['front'] < d1 and regions['fright'] < d1 and regions['fleft'] < d1 : #too close to wall
+        state_description = 'case 9 - left and right'
+        change_state(4)
+    if regions['front'] < d1 or regions['fright'] < d1 or regions['fleft'] < d1 or regions['right'] < d1 or regions['left'] < d1 : #too close to wall
+        change_state(4)
+    if regions['front'] > 2 and regions['fright'] < d and regions['fleft'] > d and regions['left'] > d and regions['right'] < d: #go straight
+        state_description = 'case 7 - front and fleft and fright'
         change_state(2)
+    if regions['front'] > 2 and regions['fright'] <= 2 and regions['fleft'] > d and regions['left'] > d and regions['right'] < d: #go straight
+        state_description = 'case 7 - front and fleft and fright'
+        change_state(2)
+
+
+
     else:
         pass
         #state_description = 'unknown case'
@@ -85,10 +115,10 @@ def find_wall():
     global count
     print('find wall')
     msg = Twist()
-    msg.linear.x = 0.5
+    msg.linear.x = 0.8
     msg.angular.z = 0.5
     count = 1 
-    rospy.sleep(5)
+    #rospy.sleep(5)
     return msg 
  
 def turn_left():
@@ -97,7 +127,7 @@ def turn_left():
     msg = Twist()
     msg.angular.z = 0.7
     left_Count += 1
-    rospy.sleep(5)
+    #rospy.sleep(5)
     return msg
 
 def turn_right():
@@ -105,16 +135,21 @@ def turn_right():
     msg = Twist()
     msg.angular.z = -0.3
     left_Count = 0
-    rospy.sleep(5)
+    #ospy.sleep(5)
     return msg
  
 def follow_the_wall():
     global regions_
     print('turn_left')
     msg = Twist()
-    msg.linear.x = 0.3
-    rospy.sleep(5)
+    msg.linear.x = 0.6
+    #rospy.sleep(5)
     return msg
+def reverse():
+    print('reverse')
+    msg = Twist()
+    msg.linear.x = - 0.5
+    ms.angular.z = 0.5
 
 
     
@@ -136,6 +171,8 @@ def main():
             msg = turn_left()
         elif state_ == 3:
             msg = turn_right()
+        elif state_ == 4:
+            msg = reverse()
         elif state_ == 2:
             msg = follow_the_wall()
             pass
